@@ -749,6 +749,7 @@ GameObject:
   - component: {fileID: 39898328310119551}
   - component: {fileID: 5362081824660622280}
   - component: {fileID: 4091958444726747540}
+  - component: {fileID: 1232874450570390791}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -887,6 +888,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _targetDistance: 12
+--- !u!114 &1232874450570390791
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5029657030195261144}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d3a9a3983cd5c4246a945a6761ce8be6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
 --- !u!1 &5290862285777457191
 GameObject:
   m_ObjectHideFlags: 0
@@ -903,8 +917,8 @@ GameObject:
   - component: {fileID: 4394470238075351377}
   - component: {fileID: 3020191393328537066}
   - component: {fileID: 7602471996788781821}
-  - component: {fileID: 9010222559658393001}
-  - component: {fileID: 4475520582289614078}
+  - component: {fileID: 8643251263659223651}
+  - component: {fileID: 726812199899385111}
   m_Layer: 0
   m_Name: NetworkPlayer
   m_TagString: Untagged
@@ -1070,7 +1084,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
---- !u!114 &9010222559658393001
+  _isServerAuth: 0
+--- !u!114 &8643251263659223651
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1106,7 +1121,7 @@ MonoBehaviour:
   SwitchTransformSpaceWhenParented: 0
   Interpolate: 1
   SlerpPosition: 0
---- !u!114 &4475520582289614078
+--- !u!114 &726812199899385111
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1599,6 +1614,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4912201581055782261}
+  - component: {fileID: 7803279385722850412}
   m_Layer: 0
   m_Name: Camera Pivot
   m_TagString: Untagged
@@ -1622,6 +1638,21 @@ Transform:
   - {fileID: 3156288937983569561}
   m_Father: {fileID: 5655064611906091038}
   m_LocalEulerAnglesHint: {x: 50, y: 0, z: 0}
+--- !u!114 &7803279385722850412
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7070377772033496636}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e6380a91a62afcb4dabc6f1c901d6c5a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _eulerRotation: {x: 50, y: 0, z: 0}
+  _useSetRotation: 1
+  _useCamDirection: 0
 --- !u!1 &7100720789946802677
 GameObject:
   m_ObjectHideFlags: 0

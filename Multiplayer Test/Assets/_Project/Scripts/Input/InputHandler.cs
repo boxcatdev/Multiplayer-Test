@@ -87,52 +87,85 @@ public class InputHandler : MonoBehaviour
     {
         CheckControl(context.control.device.name);
 
-        move = context.ReadValue<Vector2>();
+        MoveInput(context.ReadValue<Vector2>());
+        //move = context.ReadValue<Vector2>();
     }
     private void StopMove(InputAction.CallbackContext context)
     {
         CheckControl(context.control.device.name);
 
-        move = context.ReadValue<Vector2>();
+        MoveInput(context.ReadValue<Vector2>());
+        //move = context.ReadValue<Vector2>();
     }
     private void Primary(InputAction.CallbackContext context)
     {
         CheckControl(context.control.device.name);
 
         bool good = context.ReadValueAsButton();
+        PrimaryInput(good);
 
-        if (good) OnPrimaryPress?.Invoke();
+        //if (good) OnPrimaryPress?.Invoke();
     }
     private void Secondary(InputAction.CallbackContext context)
     {
         CheckControl(context.control.device.name);
 
         bool good = context.ReadValueAsButton();
+        SecondaryInput(good);
 
-        if (good) OnSecondaryPress?.Invoke();
+        //if (good) OnSecondaryPress?.Invoke();
     }
     private void Use(InputAction.CallbackContext context)
     {
         CheckControl(context.control.device.name);
 
         bool good = context.ReadValueAsButton();
+        UseInput(good);
 
-        if (good) OnUsePress?.Invoke();
+        //if (good) OnUsePress?.Invoke();
     }
     private void Pause(InputAction.CallbackContext context)
     {
         CheckControl(context.control.device.name);
 
         bool good = context.ReadValueAsButton();
+        PauseInput(good);
 
-        if (good) OnPausePress?.Invoke();
+        //if (good) OnPausePress?.Invoke();
     }
     private void Menu(InputAction.CallbackContext context)
     {
         CheckControl(context.control.device.name);
 
         bool good = context.ReadValueAsButton();
+        MenuInput(good);
 
-        if (good) OnMenuPress?.Invoke();
+        //if (good) OnMenuPress?.Invoke();
+    }
+
+
+    public void MoveInput(Vector2 newMove)
+    {
+        move = newMove;
+    }
+    public void PrimaryInput(bool newPrimary)
+    {
+        if (newPrimary) OnPrimaryPress?.Invoke();
+    }
+    public void SecondaryInput(bool newSecondary)
+    {
+        if (newSecondary) OnSecondaryPress?.Invoke();
+    }
+    public void UseInput(bool newUse)
+    {
+        if (newUse) OnUsePress?.Invoke();
+    }
+    public void PauseInput(bool newPause)
+    {
+        if (newPause) OnPausePress?.Invoke();
+    }
+    public void MenuInput(bool newMenu)
+    {
+        if (newMenu) OnMenuPress?.Invoke();
     }
 }
