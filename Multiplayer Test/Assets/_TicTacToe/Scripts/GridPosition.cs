@@ -8,6 +8,6 @@ public class GridPosition : MonoBehaviour
     {
         //Debug.Log($"Click {x},{y}");
 
-        GameManager.Instance.ClickedOnGridPosition(x, y);
+        GameManager.Instance.ClickedOnGridPositionRpc(x, y, GameManager.Instance.LocalPlayerType);
     }
 }

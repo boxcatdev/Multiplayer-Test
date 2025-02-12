@@ -8,8 +8,10 @@ public class GameManager : NetworkBehaviour
 
     public static GameManager Instance { get; private set; }
 
-    private PlayerType _localPlayerType;
-    public PlayerType localPlayerType => _localPlayerType;
+    private PlayerType localPlayerType;
+    private PlayerType currentTurnPlayerType;
+
+    public PlayerType LocalPlayerType => localPlayerType;
 
     public Action<int, int, PlayerType> OnClickedOnGridPosition = delegate { };
 
@@ -33,17 +35,32 @@ public class GameManager : NetworkBehaviour
     {
         base.OnNetworkSpawn();
 
-        if (NetworkManager.Singleton.LocalClientId == 0) _localPlayerType = PlayerType.Cross;
-        else _localPlayerType = PlayerType.Circle;
+        if (NetworkManager.Singleton.LocalClientId == 0) localPlayerType = PlayerType.Cross;
+        else localPlayerType = PlayerType.Circle;
 
-        Debug.Log("Player type: " + _localPlayerType.ToString());
+        Debug.Log("Player type: " + localPlayerType.ToString());
+
+        // only the server's version of this property matters
+        if (IsServer)
+        {
+            currentTurnPlayerType = PlayerType.Cross;
+        }
     }
 
-    public void ClickedOnGridPosition(int x, int y)
+    [Rpc(SendTo.Server)]
+    public void ClickedOnGridPositionRpc(int x, int y, PlayerType playerType)
     {
+        // check if current player turn
+        if (playerType != currentTurnPlayerType) return;
+
         Debug.Log("Clicked on " + x + ", " + y);
 
-        OnClickedOnGridPosition?.Invoke(x, y, _localPlayerType);
+        // visual event
+        OnClickedOnGridPosition?.Invoke(x, y, playerType);
+
+        // switch turns
+        if (currentTurnPlayerType == PlayerType.Cross) currentTurnPlayerType = PlayerType.Circle;
+        else currentTurnPlayerType = PlayerType.Cross;
     }
 }
 
