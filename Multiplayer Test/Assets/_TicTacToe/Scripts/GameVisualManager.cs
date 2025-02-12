@@ -9,18 +9,45 @@ public class GameVisualManager : NetworkBehaviour
     [Header("Prefabs")]
     [SerializeField] private Transform crossPrefab;
     [SerializeField] private Transform circlePrefab;
-
+    [SerializeField] private Transform lineCompletePrefab;
 
     private void Start()
     {
-        GameManager.Instance.OnClickedOnGridPosition += ClickedOnGridPosition;
+        GameManager.Instance.OnClickedOnGridPosition += GM_ClickedOnGridPosition;
+        GameManager.Instance.OnGameWin += GM_GameWin;
     }
     private void OnDisable()
     {
-        GameManager.Instance.OnClickedOnGridPosition -= ClickedOnGridPosition;
+        GameManager.Instance.OnClickedOnGridPosition -= GM_ClickedOnGridPosition;
+        GameManager.Instance.OnGameWin -= GM_GameWin;
     }
 
-    private void ClickedOnGridPosition(int x, int y, GameManager.PlayerType playerType)
+    private void GM_GameWin(GameManager.Line line)
+    {
+        float eulerY = 0f;
+        switch (line.orientation)
+        {
+            default:
+                eulerY = 0f;
+                break;
+            case GameManager.Orientation.Horizontal:
+                eulerY = 0f;
+                break;
+            case GameManager.Orientation.Vertical:
+                eulerY = 90f;
+                break;
+            case GameManager.Orientation.DiagonalA:
+                eulerY = 45f;
+                break;
+            case GameManager.Orientation.DiagonalB:
+                eulerY = -45f;
+                break;
+        }
+
+        Transform lineCompleteTransform = Instantiate(lineCompletePrefab, GetGridWorldPosition(line.centerGridPosition.x, line.centerGridPosition.y), Quaternion.Euler(0, eulerY, 0));
+        lineCompleteTransform.GetComponent<NetworkObject>().Spawn(true);
+    }
+    private void GM_ClickedOnGridPosition(int x, int y, GameManager.PlayerType playerType)
     {
         Debug.Log("ClickedEvent");
 

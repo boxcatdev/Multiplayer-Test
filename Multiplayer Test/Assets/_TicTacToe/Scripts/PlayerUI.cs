@@ -47,10 +47,15 @@ public class PlayerUI : MonoBehaviour
             if (crossArrowGameObject != null) crossArrowGameObject.SetActive(true);
             if (circleArrowGameObject != null) circleArrowGameObject.SetActive(false);
         }
-        else
+        else if (GameManager.Instance.currentTurnPlayerType.Value == GameManager.PlayerType.Circle)
         {
             if (crossArrowGameObject != null) crossArrowGameObject.SetActive(false);
             if (circleArrowGameObject != null) circleArrowGameObject.SetActive(true);
+        }
+        else
+        {
+            if (crossArrowGameObject != null) crossArrowGameObject.SetActive(false);
+            if (circleArrowGameObject != null) circleArrowGameObject.SetActive(false);
         }
     }
 }
