@@ -11,6 +11,7 @@ public class GameManager : NetworkBehaviour
     public PlayerType localPlayerType { get; private set; }
     public NetworkVariable<PlayerType> currentTurnPlayerType = new NetworkVariable<PlayerType>();
 
+    private PlayerType[,] playerTypeArray;
 
     public Action<int, int, PlayerType> OnClickedOnGridPosition = delegate { };
     
@@ -31,6 +32,8 @@ public class GameManager : NetworkBehaviour
             if (Instance != this) Destroy(gameObject);
         }*/
         #endregion
+
+        playerTypeArray = new PlayerType[3,3];
     }
 
     public override void OnNetworkSpawn()
@@ -79,7 +82,13 @@ public class GameManager : NetworkBehaviour
         // check if current player turn
         if (playerType != currentTurnPlayerType.Value) return;
 
+        // check if a piece has already been placed
+        if (playerTypeArray[x, y] != PlayerType.None) return;
+
         Debug.Log("Clicked on " + x + ", " + y);
+
+        // set playertype on position
+        playerTypeArray[x, y] = playerType;
 
         // visual event
         OnClickedOnGridPosition?.Invoke(x, y, playerType);
