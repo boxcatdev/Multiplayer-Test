@@ -1666,6 +1666,8 @@ MonoBehaviour:
     m_InternalValue: 0
   playerYellowScore:
     m_InternalValue: 0
+  waitingMovement:
+    m_InternalValue: 0
 --- !u!4 &1406879116
 Transform:
   m_ObjectHideFlags: 0
@@ -2073,6 +2075,14 @@ PrefabInstance:
     - target: {fileID: 2913285741479814793, guid: a6fe5adecdd5df34b95eb79226d9202a, type: 3}
       propertyPath: m_Name
       value: Column
+      objectReference: {fileID: 0}
+    - target: {fileID: 6039352745256032911, guid: a6fe5adecdd5df34b95eb79226d9202a, type: 3}
+      propertyPath: m_Size.y
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 6039352745256032911, guid: a6fe5adecdd5df34b95eb79226d9202a, type: 3}
+      propertyPath: m_Center.y
+      value: 3.5
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

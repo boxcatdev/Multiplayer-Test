@@ -1,14 +1,26 @@
 using System;
+using Unity.Netcode;
 using UnityEngine;
 
-public class GameChip : MonoBehaviour
+public class GameChip : NetworkBehaviour
 {
-    [SerializeField] private MeshRenderer meshRenderer;
-    [Space]
+    private GameManagerConnect.PlayerType _playerType;
+    public GameManagerConnect.PlayerType playerType => _playerType;
+
     [SerializeField] private Transform redChip;
     [SerializeField] private Transform yellowChip;
 
-    public void SetPlayerType(GameManagerConnect.PlayerType playerType)
+    public Action<GameManagerConnect.PlayerType> OnSetPlayerType = delegate { };
+
+    private void OnEnable()
+    {
+        OnSetPlayerType += SetPlayerType;
+    }
+    private void OnDisable()
+    {
+        OnSetPlayerType -= SetPlayerType;
+    }
+    private void SetPlayerType(GameManagerConnect.PlayerType playerType)
     {
         if (playerType == GameManagerConnect.PlayerType.Red)
         {

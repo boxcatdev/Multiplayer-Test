@@ -25,7 +25,7 @@ public class GameManagerConnect : NetworkBehaviour
 
     // events
     public Action<GridColumn, PlayerType> OnColumnHover = delegate { };
-    public Action<GridColumn, PlayerType> OnColumnSelect = delegate { };
+    public Action<int, int, PlayerType> OnColumnSelect = delegate { };
 
     public Action OnGameStart = delegate { };
     public Action OnGameWin = delegate { };
@@ -83,26 +83,66 @@ public class GameManagerConnect : NetworkBehaviour
 
     // server rpcs
     [Rpc(SendTo.Server)]
-    public void HoverOnColumnRpc(int columnIndex, PlayerType playerType)
+    public void HoverOnColumnRpc(int columnIndex, PlayerType localPlayerType)
     {
         if (columnIndex >= _gridColumns.Count) return;
+        if (localPlayerType != currentPlayerTurn.Value) return;
+
 
         GridColumn column = _gridColumns[columnIndex];
         Debug.Log("GM Hover " + column.name);
 
         // spawn event
-        OnColumnHover?.Invoke(column, playerType);
+        OnColumnHover?.Invoke(column, localPlayerType);
     }
     [Rpc(SendTo.Server)]
-    public void SelectColumnRpc(int columnIndex, PlayerType playerType)
+    public void SelectColumnRpc(int columnIndex, PlayerType localPlayerType)
     {
         if (columnIndex >= _gridColumns.Count) return;
+        if (localPlayerType != currentPlayerTurn.Value) return;
+
+        if (waitingMovement.Value == true) return;
+        if (_currentChip == null) return;
 
         GridColumn column = _gridColumns[columnIndex];
         Debug.Log("GM Select " + column.name);
 
-        // click event
-        OnColumnSelect?.Invoke(column, playerType);
+
+        // find free slot in column
+        for (int y = 0; y < VisualManagerConnect.GRID_HEIGHT; y++)
+        {
+            if (_playerTypeArray[columnIndex, y] == PlayerType.None)
+            {
+                Debug.Log("Free slot: " + columnIndex + "," + y);
+
+                //waiting
+                waitingMovement.Value = true;
+
+                // set type
+                _playerTypeArray[columnIndex, y] = localPlayerType;
+
+
+
+
+                // click event
+                OnColumnSelect?.Invoke(columnIndex, y, localPlayerType);
+
+                // switch turn
+                if (currentPlayerTurn.Value == PlayerType.Red) currentPlayerTurn.Value = PlayerType.Yellow;
+                else currentPlayerTurn.Value = PlayerType.Red;
+
+
+
+                break;
+            }
+        }
+
+        
+    }
+    [Rpc(SendTo.Server)]
+    public void CheckWinnerRpc()
+    {
+        Debug.Log("CheckWinner()");
     }
     [Rpc(SendTo.ClientsAndHost)]
     private void TriggerOnGameStartRpc()
