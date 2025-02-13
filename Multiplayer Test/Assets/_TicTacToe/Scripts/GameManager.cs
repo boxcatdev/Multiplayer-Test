@@ -34,6 +34,7 @@ public class GameManager : NetworkBehaviour
     public Action OnRematch = delegate { };
     public Action OnGameTied = delegate { };
     public Action OnScoreChanged = delegate { };
+    public Action OnPlaceObject = delegate { };
 
     public Action OnCurrentPlayerTurnChanged = delegate { };
 
@@ -225,6 +226,11 @@ public class GameManager : NetworkBehaviour
     }
 
     [Rpc(SendTo.ClientsAndHost)]
+    private void TriggerOnPlaceObjectRpc()
+    {
+        OnPlaceObject?.Invoke();
+    }
+    [Rpc(SendTo.ClientsAndHost)]
     private void TriggerOnGameTiedRpc()
     {
         OnGameTied?.Invoke();
@@ -263,6 +269,9 @@ public class GameManager : NetworkBehaviour
 
         // visual event
         OnClickedOnGridPosition?.Invoke(x, y, playerType);
+
+        // audio event
+        TriggerOnPlaceObjectRpc();
 
         // switch turns
         if (currentTurnPlayerType.Value == PlayerType.Cross) currentTurnPlayerType.Value = PlayerType.Circle;
