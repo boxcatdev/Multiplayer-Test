@@ -181,7 +181,8 @@ public class GameManager : NetworkBehaviour
                 }
                 TriggerOnGameWinRpc(lineList.IndexOf(line), winPlayerType);
 
-                break;
+                //break;
+                return;
             }
         }
 
