@@ -27,7 +27,10 @@ public class GameManager : NetworkBehaviour
     public Action<int, int, PlayerType> OnClickedOnGridPosition = delegate { };
     
     public Action OnGameStarted = delegate { };
-    public Action<Line> OnGameWin = delegate { };
+    public Action<Line, PlayerType> OnGameWin = delegate { };
+    public Action OnRematch = delegate { };
+    public Action OnGameTied = delegate { };
+
     public Action OnCurrentPlayerTurnChanged = delegate { };
 
     private void Awake()
@@ -153,15 +156,71 @@ public class GameManager : NetworkBehaviour
         {
             if (CheckWinnerLine(line))
             {
-                Debug.Log($"Winner {playerTypeArray[0, 0]}");
                 currentTurnPlayerType.Value = PlayerType.None;
 
-                OnGameWin?.Invoke(line);
+                TriggerOnGameWinRpc(lineList.IndexOf(line), playerTypeArray[line.centerGridPosition.x, line.centerGridPosition.y]);
+
                 break;
             }
         }
+
+        // tie check
+        bool hasTie = true;
+        for (int x = 0; x < playerTypeArray.GetLength(0); x++)
+        {
+            for (int y = 0; y < playerTypeArray.GetLength(1); y++)
+            {
+                if (playerTypeArray[x, y] == PlayerType.None)
+                {
+                    hasTie = false;
+                    break;
+                }
+            }
+        }
+
+        if (hasTie)
+        {
+            TriggerOnGameTiedRpc();
+        }
     }
 
+
+    [Rpc(SendTo.Server)]
+    public void RematchRpc()
+    {
+        // board positions
+        for (int x = 0; x < playerTypeArray.GetLength(0); x++)
+        {
+            for (int y = 0; y < playerTypeArray.GetLength(1); y++)
+            {
+                playerTypeArray[x,y] = PlayerType.None;
+            }
+        }
+
+        // player types
+        currentTurnPlayerType.Value = PlayerType.Cross;
+
+        // remove visuals
+        TriggerOnRematchRpc();
+    }
+
+    [Rpc(SendTo.ClientsAndHost)]
+    private void TriggerOnGameTiedRpc()
+    {
+        OnGameTied?.Invoke();
+    }
+    [Rpc(SendTo.ClientsAndHost)]
+    private void TriggerOnRematchRpc()
+    {
+        OnRematch?.Invoke();
+    }
+    [Rpc(SendTo.ClientsAndHost)]
+    private void TriggerOnGameWinRpc(int lineIndex, PlayerType winningPlayerType)
+    {
+        Line line = lineList[lineIndex];
+        OnGameWin?.Invoke(line, winningPlayerType);
+
+    }
     [Rpc(SendTo.ClientsAndHost)]
     private void TriggerOnGameStartedRpc()
     {
