@@ -39,7 +39,7 @@ public class VisualManagerConnect : NetworkBehaviour
         else
         {
             // move to column position
-            GameManagerConnect.Instance.GetCurrentChip().transform.position = position;
+            GameManagerConnect.Instance.GetCurrentChip().transform.DOMove(position, 0.125f);
         }
     }
     private void GM_ColumnSelect(int x, int y, GameManagerConnect.PlayerType playerType)
