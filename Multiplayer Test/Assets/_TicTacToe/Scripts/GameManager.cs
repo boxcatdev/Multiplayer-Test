@@ -23,6 +23,9 @@ public class GameManager : NetworkBehaviour
     private PlayerType[,] playerTypeArray;
     private List<Line> lineList;
 
+    public NetworkVariable<int> playerCrossScore = new NetworkVariable<int>();
+    public NetworkVariable<int> playerCircleScore = new NetworkVariable<int>();
+
 
     public Action<int, int, PlayerType> OnClickedOnGridPosition = delegate { };
     
@@ -30,6 +33,7 @@ public class GameManager : NetworkBehaviour
     public Action<Line, PlayerType> OnGameWin = delegate { };
     public Action OnRematch = delegate { };
     public Action OnGameTied = delegate { };
+    public Action OnScoreChanged = delegate { };
 
     public Action OnCurrentPlayerTurnChanged = delegate { };
 
@@ -80,7 +84,7 @@ public class GameManager : NetworkBehaviour
             new Line()
             {
                 centerGridPosition = new Vector2Int(1, 1),
-                lineGridPositions = new List<Vector2Int>() {new Vector2Int(1,0), new Vector2Int(1,1), new Vector2Int(2,1)},
+                lineGridPositions = new List<Vector2Int>() {new Vector2Int(0,1), new Vector2Int(1,1), new Vector2Int(2,1)},
                 orientation = Orientation.Horizontal
             },
             new Line()
@@ -120,10 +124,16 @@ public class GameManager : NetworkBehaviour
             NetworkManager.Singleton.OnClientConnectedCallback += NetworkManagerConnectedCallback;
         }
 
-        // network variable listener
+        // network variable listeners
         currentTurnPlayerType.OnValueChanged += CurrentPlayerTurnValueChanged;
+        playerCrossScore.OnValueChanged += ScoreChangedListener;
+        playerCircleScore.OnValueChanged += ScoreChangedListener;
     }
 
+    private void ScoreChangedListener(int previousScore, int newScore)
+    {
+        OnScoreChanged?.Invoke();
+    }
     private void CurrentPlayerTurnValueChanged(PlayerType previousValue, PlayerType newValue)
     {
         OnCurrentPlayerTurnChanged?.Invoke();
@@ -158,7 +168,17 @@ public class GameManager : NetworkBehaviour
             {
                 currentTurnPlayerType.Value = PlayerType.None;
 
-                TriggerOnGameWinRpc(lineList.IndexOf(line), playerTypeArray[line.centerGridPosition.x, line.centerGridPosition.y]);
+                PlayerType winPlayerType = playerTypeArray[line.centerGridPosition.x, line.centerGridPosition.y];
+                switch (winPlayerType)
+                {
+                    case PlayerType.Cross:
+                        playerCrossScore.Value++;
+                        break;
+                    case PlayerType.Circle:
+                        playerCircleScore.Value++; 
+                        break;
+                }
+                TriggerOnGameWinRpc(lineList.IndexOf(line), winPlayerType);
 
                 break;
             }
@@ -252,6 +272,13 @@ public class GameManager : NetworkBehaviour
 
         // test winner
         CheckWinner();
+    }
+
+
+    public void GetScores(out int crossScore, out int circleScore)
+    {
+        crossScore = playerCrossScore.Value;
+        circleScore = playerCircleScore.Value;
     }
 }
 
