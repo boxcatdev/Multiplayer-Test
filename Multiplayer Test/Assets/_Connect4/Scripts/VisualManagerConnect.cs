@@ -55,7 +55,8 @@ public class VisualManagerConnect : NetworkBehaviour
 
         GameManagerConnect.Instance.SetCurrentChip(chip);
 
-        ChangeChipColorRpc(playerType);
+        // hopefully network spawn handles this
+        //ChangeChipColorRpc(playerType);
     }
     [Rpc(SendTo.Server)]
     private void StackChipOnColumnRpc(int x, int y, GameManagerConnect.PlayerType playerType)
@@ -103,13 +104,13 @@ public class VisualManagerConnect : NetworkBehaviour
         }*/
 
     }
-    [Rpc(SendTo.ClientsAndHost)]
+    /*[Rpc(SendTo.ClientsAndHost)]
     private void ChangeChipColorRpc(GameManagerConnect.PlayerType playerType)
     {
         if (GameManagerConnect.Instance.GetCurrentChip() == null) return;
 
         GameManagerConnect.Instance.GetCurrentChip().OnSetPlayerType(playerType);
-    }
+    }*/
 
     private Vector3 GetGridWorldPosition(int x, int y)
     {

@@ -4,24 +4,28 @@ using UnityEngine;
 
 public class GameChip : NetworkBehaviour
 {
+    [SerializeField]
     private GameManagerConnect.PlayerType _playerType;
     public GameManagerConnect.PlayerType playerType => _playerType;
 
+    [Space]
     [SerializeField] private Transform redChip;
     [SerializeField] private Transform yellowChip;
 
-    public Action<GameManagerConnect.PlayerType> OnSetPlayerType = delegate { };
+    //public Action<GameManagerConnect.PlayerType> OnSetPlayerType = delegate { };
 
-    private void OnEnable()
+    public override void OnNetworkSpawn()
     {
-        OnSetPlayerType += SetPlayerType;
+        base.OnNetworkSpawn();
+
+        SetPlayerType(GameManagerConnect.Instance.currentPlayerTurn.Value);
+        
     }
-    private void OnDisable()
-    {
-        OnSetPlayerType -= SetPlayerType;
-    }
+
     private void SetPlayerType(GameManagerConnect.PlayerType playerType)
     {
+        _playerType = playerType;
+
         if (playerType == GameManagerConnect.PlayerType.Red)
         {
             if (redChip != null) redChip.gameObject.SetActive(true);
