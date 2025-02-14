@@ -44,8 +44,8 @@ public class GameManagerConnect : NetworkBehaviour
     public Action<int, int, PlayerType> OnColumnSelect = delegate { };
 
     public Action OnGameStart = delegate { };
-    public Action OnGameWin = delegate { };
-    public Action OnGameTied = delegate { };
+    public Action<PlayerType> OnGameWin = delegate { };
+    public Action OnGameDraw = delegate { };
     public Action OnGameRematch = delegate { };
 
     public Action OnCurrentTurnValueChanged = delegate { };
@@ -248,6 +248,25 @@ public class GameManagerConnect : NetworkBehaviour
         return false;
     }
 
+    [Rpc(SendTo.Server)]
+    public void RematchGameRpc()
+    {
+        // reset player type array
+        for (int x = 0; x < _playerTypeArray.GetLength(0); x++)
+        {
+            for (int y = 0; y < _playerTypeArray.GetLength(1); y++)
+            {
+                _playerTypeArray[x,y] = PlayerType.None;
+            }
+        }
+
+        // reset player turn
+        currentPlayerTurn.Value = PlayerType.Red;
+
+        // visuals event
+        TriggerOnGameRematchRpc();
+    }
+
     // client rpcs
     [Rpc(SendTo.ClientsAndHost)]
     private void TriggerOnGameStartRpc()
@@ -257,12 +276,17 @@ public class GameManagerConnect : NetworkBehaviour
     [Rpc(SendTo.ClientsAndHost)]
     private void TriggerOnGameWinRpc(PlayerType winningPlayerType)
     {
-
+        OnGameWin?.Invoke(winningPlayerType);
     }
     [Rpc(SendTo.ClientsAndHost)]
     private void TriggerOnGameDrawRpc()
     {
-
+        OnGameDraw?.Invoke();
+    }
+    [Rpc(SendTo.ClientsAndHost)]
+    private void TriggerOnGameRematchRpc()
+    {
+        OnGameRematch?.Invoke();
     }
 
     // references

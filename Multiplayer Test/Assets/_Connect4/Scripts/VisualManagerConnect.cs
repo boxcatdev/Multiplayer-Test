@@ -1,4 +1,5 @@
 using DG.Tweening;
+using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -12,19 +13,35 @@ public class VisualManagerConnect : NetworkBehaviour
     [Header("Prefabs")]
     [SerializeField] private GameChip chipPrefab;
 
-    [Header("Materials")]
-    [SerializeField] private Material redMaterial;
-    [SerializeField] private Material yellowMaterial;
+    private List<GameObject> visualGameObjects = new List<GameObject>();
 
 
+    private void Awake()
+    {
+        visualGameObjects = new List<GameObject>();
+    }
     private void Start()
     {
         GameManagerConnect.Instance.OnColumnHover += GM_ColumnHover;
         GameManagerConnect.Instance.OnColumnSelect += GM_ColumnSelect;
+        GameManagerConnect.Instance.OnGameRematch += GM_GameRematch;
+    }
+    private void OnDisable()
+    {
+        GameManagerConnect.Instance.OnColumnHover -= GM_ColumnHover;
+        GameManagerConnect.Instance.OnColumnSelect -= GM_ColumnSelect;
+        GameManagerConnect.Instance.OnGameRematch -= GM_GameRematch;
     }
 
 
-
+    private void GM_GameRematch()
+    {
+        foreach (var gameObject in visualGameObjects)
+        {
+            Destroy(gameObject);
+        }
+        visualGameObjects.Clear();
+    }
     private void GM_ColumnHover(GridColumn column, GameManagerConnect.PlayerType playerType)
     {
         if (GameManagerConnect.Instance.waitingMovement.Value == true) return;
@@ -55,6 +72,8 @@ public class VisualManagerConnect : NetworkBehaviour
 
         GameManagerConnect.Instance.SetCurrentChip(chip);
 
+        visualGameObjects.Add(chip.gameObject);
+
         // hopefully network spawn handles this
         //ChangeChipColorRpc(playerType);
     }
@@ -75,42 +94,7 @@ public class VisualManagerConnect : NetworkBehaviour
         // set current chip to null
         GameManagerConnect.Instance.SetCurrentChip(null);
 
-        // move to free slot in column
-        /*for (int y = 0; y < GRID_HEIGHT; y++)
-        {
-            if (GameManagerConnect.Instance.GetPlayerTypeArray()[x, y] == GameManagerConnect.PlayerType.None)
-            {
-                Debug.Log("Free slot: " + x + "," + y);
-                Debug.Log("playerType = " + playerType.ToString());
-
-                GameManagerConnect.Instance.waitingMovement.Value = true;
-
-                // set type
-                GameManagerConnect.Instance.SetPlayerTypeInArray(playerType, x, y);
-
-                // move chip
-                Vector3 position = new Vector3(x, y, 0);
-                GameManagerConnect.Instance.GetCurrentChip().transform.DOMove(position, 0.5f).OnComplete(() =>
-                {
-                    // set waiting to false
-                    GameManagerConnect.Instance.waitingMovement.Value = false;
-                });
-
-                // set current chip to null
-                GameManagerConnect.Instance.SetCurrentChip(null);
-
-                break;
-            }
-        }*/
-
     }
-    /*[Rpc(SendTo.ClientsAndHost)]
-    private void ChangeChipColorRpc(GameManagerConnect.PlayerType playerType)
-    {
-        if (GameManagerConnect.Instance.GetCurrentChip() == null) return;
-
-        GameManagerConnect.Instance.GetCurrentChip().OnSetPlayerType(playerType);
-    }*/
 
     private Vector3 GetGridWorldPosition(int x, int y)
     {
