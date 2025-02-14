@@ -7,7 +7,7 @@ public class GameManagerConnect : NetworkBehaviour
 {
     public static GameManagerConnect Instance;
 
-    public enum PlayerType { None, Red, Yellow}
+    public enum PlayerType { None, Red, Yellow }
 
     [Header("Transforms")]
     [SerializeField] private List<GridColumn> _gridColumns = new List<GridColumn>();
@@ -17,6 +17,22 @@ public class GameManagerConnect : NetworkBehaviour
     private PlayerType _localPlayerType;
     private PlayerType[,] _playerTypeArray;
 
+    // lines
+    private List<Vector2Int[]> _winningLineOffsets = new List<Vector2Int[]>()
+    {
+        // current xy not included
+        new Vector2Int[3] {new Vector2Int(0,1), new Vector2Int(0,2), new Vector2Int(0,3)}, // north
+        new Vector2Int[3] {new Vector2Int(1,0), new Vector2Int(2,0), new Vector2Int(3,0)}, // east
+        new Vector2Int[3] {new Vector2Int(0,-1), new Vector2Int(0,-2), new Vector2Int(0,-3)}, // south
+        new Vector2Int[3] {new Vector2Int(-1,0), new Vector2Int(-2,0), new Vector2Int(-3,0)}, // west
+        
+        new Vector2Int[3] {new Vector2Int(1,1), new Vector2Int(2,2), new Vector2Int(3,3)}, // northeast
+        new Vector2Int[3] {new Vector2Int(1,-1), new Vector2Int(2,-2), new Vector2Int(3,-3)}, // southeast
+        new Vector2Int[3] {new Vector2Int(-1,-1), new Vector2Int(-2,-2), new Vector2Int(-3,-3)}, // southwest
+        new Vector2Int[3] {new Vector2Int(-1,1), new Vector2Int(-2,2), new Vector2Int(-3,3)}, // northwest
+    };
+
+    // network variables
     public NetworkVariable<PlayerType> currentPlayerTurn = new NetworkVariable<PlayerType>();
     public NetworkVariable<int> playerRedScore = new NetworkVariable<int>();
     public NetworkVariable<int> playerYellowScore = new NetworkVariable<int>();
@@ -121,9 +137,6 @@ public class GameManagerConnect : NetworkBehaviour
                 // set type
                 _playerTypeArray[columnIndex, y] = localPlayerType;
 
-
-
-
                 // click event
                 OnColumnSelect?.Invoke(columnIndex, y, localPlayerType);
 
@@ -140,9 +153,58 @@ public class GameManagerConnect : NetworkBehaviour
         
     }
     [Rpc(SendTo.Server)]
-    public void CheckWinnerRpc()
+    public void CheckWinnerRpc(PlayerType lastPlacedType)
     {
         Debug.Log("CheckWinner()");
+
+        // for each chip on the board (of the same type as last placed)
+        // check 8 directions
+        // if 4 in a row are the same then win
+
+        bool hasWon = false;
+        int width = VisualManagerConnect.GRID_WIDTH;
+        int height = VisualManagerConnect.GRID_HEIGHT;
+        int loopCount = 0;
+        for (int x = 0; x < width; x++)
+        {
+            for (int y = 0; y < height; y++)
+            {
+                if (_playerTypeArray[x, y] != lastPlacedType) continue;
+                if (hasWon == true) break;
+
+                loopCount++;
+
+                PlayerType xyType = _playerTypeArray[x, y];
+                
+                // do foreach loop
+                foreach (var line in _winningLineOffsets)
+                {
+                    int count = 0;
+                    foreach (var index in line)
+                    {
+                        Vector2Int offsetCoords = new Vector2Int(x + index.x, y + index.y);
+                        if (offsetCoords.x >= 0 && offsetCoords.x < width && offsetCoords.y >= 0 && offsetCoords.y < height)
+                        {
+                            if (_playerTypeArray[offsetCoords.x, offsetCoords.y] == lastPlacedType) count++;
+                        }
+                    }
+
+                    if(count == 3)
+                    {
+                        hasWon = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        //Debug.LogWarning($"LoopCount {loopCount} : won {hasWon}");
+
+        if (hasWon)
+        {
+            // do win thing
+            Debug.LogWarning($"{lastPlacedType} Wins!");
+        }
     }
     [Rpc(SendTo.ClientsAndHost)]
     private void TriggerOnGameStartRpc()

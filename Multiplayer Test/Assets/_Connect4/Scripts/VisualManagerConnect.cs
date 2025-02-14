@@ -69,7 +69,7 @@ public class VisualManagerConnect : NetworkBehaviour
             GameManagerConnect.Instance.waitingMovement.Value = false;
 
             // check winner
-            GameManagerConnect.Instance.CheckWinnerRpc();
+            GameManagerConnect.Instance.CheckWinnerRpc(playerType);
         });
 
         // set current chip to null
