@@ -57,7 +57,7 @@ public class GameManagerConnect : NetworkBehaviour
         Instance = this;
         #endregion
 
-        _playerTypeArray = new PlayerType[7,6];
+        _playerTypeArray = new PlayerType[VisualManagerConnect.GRID_WIDTH, VisualManagerConnect.GRID_HEIGHT];
     }
 
     // network
@@ -153,7 +153,7 @@ public class GameManagerConnect : NetworkBehaviour
         
     }
     [Rpc(SendTo.Server)]
-    public void CheckWinnerRpc(PlayerType lastPlacedType)
+    public void CheckWinnerRpc(PlayerType winningPlayerType)
     {
         Debug.Log("CheckWinner()");
 
@@ -161,21 +161,67 @@ public class GameManagerConnect : NetworkBehaviour
         // check 8 directions
         // if 4 in a row are the same then win
 
-        bool hasWon = false;
+        if (CheckWinnerLoops(winningPlayerType))
+        {
+            Debug.LogWarning("Game win! " + winningPlayerType);
+
+            // stop switching turns
+            currentPlayerTurn.Value = PlayerType.None;
+
+            // increase score
+            switch(winningPlayerType)
+            {
+                case PlayerType.Red:
+                    playerRedScore.Value++; break;
+                case PlayerType.Yellow:
+                    playerYellowScore.Value++; break;
+            }
+
+            TriggerOnGameWinRpc(winningPlayerType);
+            return;
+        }
+
+        // check for a draw
+        int totalCount = 0;
+        int chipCount = 0;
+        for (int x = 0; x < VisualManagerConnect.GRID_WIDTH; x++)
+        {
+            for (int y = 0; y < VisualManagerConnect.GRID_HEIGHT; y++)
+            {
+                totalCount++;
+
+                if (_playerTypeArray[x, y] != PlayerType.None)
+                {
+                    chipCount++;
+                }
+            }
+        }
+
+        if (chipCount == totalCount)
+        {
+            // draw
+            Debug.LogWarning("Draw");
+
+            // stop switching turns
+            currentPlayerTurn.Value = PlayerType.None;
+
+            TriggerOnGameDrawRpc();
+        }
+    }
+    private bool CheckWinnerLoops(PlayerType winningPlayerType)
+    {
+        //bool hasWon = false;
         int width = VisualManagerConnect.GRID_WIDTH;
         int height = VisualManagerConnect.GRID_HEIGHT;
-        int loopCount = 0;
         for (int x = 0; x < width; x++)
         {
             for (int y = 0; y < height; y++)
             {
-                if (_playerTypeArray[x, y] != lastPlacedType) continue;
-                if (hasWon == true) break;
-
-                loopCount++;
+                if (_playerTypeArray[x, y] != winningPlayerType) continue;
+                //if (hasWon == true) break;
 
                 PlayerType xyType = _playerTypeArray[x, y];
-                
+
                 // do foreach loop
                 foreach (var line in _winningLineOffsets)
                 {
@@ -185,31 +231,38 @@ public class GameManagerConnect : NetworkBehaviour
                         Vector2Int offsetCoords = new Vector2Int(x + index.x, y + index.y);
                         if (offsetCoords.x >= 0 && offsetCoords.x < width && offsetCoords.y >= 0 && offsetCoords.y < height)
                         {
-                            if (_playerTypeArray[offsetCoords.x, offsetCoords.y] == lastPlacedType) count++;
+                            if (_playerTypeArray[offsetCoords.x, offsetCoords.y] == winningPlayerType) count++;
                         }
                     }
 
-                    if(count == 3)
+                    if (count == 3)
                     {
-                        hasWon = true;
-                        break;
+                        //hasWon = true;
+                        //break;
+                        return true;
                     }
                 }
             }
         }
 
-        //Debug.LogWarning($"LoopCount {loopCount} : won {hasWon}");
-
-        if (hasWon)
-        {
-            // do win thing
-            Debug.LogWarning($"{lastPlacedType} Wins!");
-        }
+        return false;
     }
+
+    // client rpcs
     [Rpc(SendTo.ClientsAndHost)]
     private void TriggerOnGameStartRpc()
     {
         OnGameStart?.Invoke();
+    }
+    [Rpc(SendTo.ClientsAndHost)]
+    private void TriggerOnGameWinRpc(PlayerType winningPlayerType)
+    {
+
+    }
+    [Rpc(SendTo.ClientsAndHost)]
+    private void TriggerOnGameDrawRpc()
+    {
+
     }
 
     // references
