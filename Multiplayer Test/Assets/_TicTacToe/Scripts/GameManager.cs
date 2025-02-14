@@ -150,6 +150,7 @@ public class GameManager : NetworkBehaviour
         }
     }
 
+
     private bool CheckWinnerLine(Line line)
     {
         return CheckWinnerLine(playerTypeArray[line.lineGridPositions[0].x, line.lineGridPositions[0].y],
