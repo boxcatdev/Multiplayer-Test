@@ -3529,6 +3529,7 @@ MonoBehaviour:
   refreshButton: {fileID: 1688152142}
   lobbyCodeText: {fileID: 498777090}
   lobbylistText: {fileID: 580065783}
+  joiningText: {fileID: 141218110}
 --- !u!4 &1700020047
 Transform:
   m_ObjectHideFlags: 0

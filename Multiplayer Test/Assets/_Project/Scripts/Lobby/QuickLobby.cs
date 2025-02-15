@@ -36,6 +36,7 @@ public class QuickLobby : MonoBehaviour
     [SerializeField] private Button refreshButton;
     [SerializeField] private TextMeshProUGUI lobbyCodeText;
     [SerializeField] private TextMeshProUGUI lobbylistText;
+    [SerializeField] private TextMeshProUGUI joiningText;
 
     private Lobby savedLobby;
 
@@ -82,6 +83,8 @@ public class QuickLobby : MonoBehaviour
 
             // look for lobby
             Lobby lobby = await LobbyService.Instance.QuickJoinLobbyAsync();
+
+            if (joiningText != null) joiningText.text = joiningText.text + "\n" + lobby.Data[CODE_KEY].Value;
 
             // continues if lobby is found
             savedLobby = lobby;
