@@ -13,6 +13,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
 using System.Collections;
+using TMPro;
 
 public class QuickLobby : MonoBehaviour
 {
@@ -30,13 +31,23 @@ public class QuickLobby : MonoBehaviour
     private const string LOBBY_NAME = "Default Lobby";
 
     [SerializeField] private GameObject lobbyUI;
+    [Space]
     [SerializeField] private Button joinButton;
+    [SerializeField] private Button refreshButton;
+    [SerializeField] private TextMeshProUGUI lobbyCodeText;
+    [SerializeField] private TextMeshProUGUI lobbylistText;
+
+    private Lobby savedLobby;
 
     private void Awake()
     {
         joinButton.onClick.AddListener(() =>
         {
             TryJoinOrCreate();
+        });
+        refreshButton.onClick.AddListener(() =>
+        {
+            ListLobbies();
         });
     }
     private void Start()
@@ -73,7 +84,10 @@ public class QuickLobby : MonoBehaviour
             Lobby lobby = await LobbyService.Instance.QuickJoinLobbyAsync();
 
             // continues if lobby is found
+            savedLobby = lobby;
             JoinAllocation joinAllocation = await RelayService.Instance.JoinAllocationAsync(lobby.Data[CODE_KEY].Value);
+
+            if (lobbyCodeText != null) lobbyCodeText.text = "Code: " + lobby.Data[CODE_KEY].Value;
 
             // start client
             NetworkManager.Singleton.GetComponent<UnityTransport>().SetClientRelayData(
@@ -134,6 +148,35 @@ public class QuickLobby : MonoBehaviour
         {
             Debug.LogWarning(e);
             return null;
+        }
+    }
+
+    private async void ListLobbies()
+    {
+        try
+        {
+            if (lobbylistText != null) lobbylistText.text = "";
+
+            QueryLobbiesOptions queryLobbiesOptions = new QueryLobbiesOptions()
+            {
+                Count = 10,
+                Filters = new List<QueryFilter>
+                {
+                    new QueryFilter(QueryFilter.FieldOptions.AvailableSlots, "0", QueryFilter.OpOptions.GT)
+                }
+            };
+
+            QueryResponse queryResponse = await LobbyService.Instance.QueryLobbiesAsync(queryLobbiesOptions);
+
+            int index = 1;
+            foreach (var result in queryResponse.Results)
+            {
+                if (lobbylistText != null) lobbylistText.text = lobbylistText.text + "Lobby(" + index + ")" + result.Data[CODE_KEY].Value + "\n";
+            }
+        }
+        catch (LobbyServiceException e)
+        {
+            Debug.LogError(e);
         }
     }
 
