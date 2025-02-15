@@ -51,6 +51,8 @@ public class TestLobby : MonoBehaviour
         await AuthenticationService.Instance.SignInAnonymouslyAsync();
 
         playerName = "Player " + Random.Range(1, 99);
+
+        Debug.Log(playerName);
     }
     private void Update()
     {
@@ -184,6 +186,10 @@ public class TestLobby : MonoBehaviour
     {
         try
         {
+            QuickJoinLobbyOptions quickJoinLobbyOptions = new QuickJoinLobbyOptions()
+            {
+                Player = GetPlayer(),
+            };
             joinedLobby = await LobbyService.Instance.QuickJoinLobbyAsync();
 
             PrintPlayers(joinedLobby);
@@ -238,10 +244,10 @@ public class TestLobby : MonoBehaviour
     }
     private void PrintPlayers(Lobby lobby)
     {
-        Debug.Log("Players in lobby " + lobby.Name);
-        foreach (var player in lobby.Players)
+        Debug.Log($"Players in lobby {lobby.Name} {lobby.Players.Count}/{lobby.MaxPlayers}");
+        /*foreach (var player in lobby.Players)
         {
             Debug.Log(player.Id + " " + player.Data["PlayerName"].Value);
-        }
+        }*/
     }
 }

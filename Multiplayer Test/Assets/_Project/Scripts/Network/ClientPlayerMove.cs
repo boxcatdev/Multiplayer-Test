@@ -48,6 +48,13 @@ public class ClientPlayerMove : NetworkBehaviour
 
     private void Update()
     {
+        /*if (!IsOwner) return;
+        if (_isServerAuth == false) return;
+
+        UpdateInputServerRPC(inputHandler.move);*/
+    }
+    private void LateUpdate()
+    {
         if (!IsOwner) return;
         if (_isServerAuth == false) return;
 
