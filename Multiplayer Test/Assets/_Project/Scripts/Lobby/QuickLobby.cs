@@ -1,4 +1,18 @@
+using System;
+using System.Net.Http.Headers;
+using System.Threading.Tasks;
+using Unity.Netcode.Transports.UTP;
+using Unity.Netcode;
+using Unity.Services.Authentication;
+using Unity.Services.Core;
+using Unity.Services.Lobbies;
+using Unity.Services.Lobbies.Models;
+using Unity.Services.Relay.Models;
+using Unity.Services.Relay;
 using UnityEngine;
+using UnityEngine.UI;
+using System.Collections.Generic;
+using System.Collections;
 
 public class QuickLobby : MonoBehaviour
 {
@@ -10,4 +24,124 @@ public class QuickLobby : MonoBehaviour
     ///     start client
     /// after 2 players joined
     ///     start game
+    ///     
+
+    private const string CODE_KEY = "join";
+    private const string LOBBY_NAME = "Default Lobby";
+
+    [SerializeField] private GameObject lobbyUI;
+    [SerializeField] private Button joinButton;
+
+    private void Awake()
+    {
+        joinButton.onClick.AddListener(() =>
+        {
+            TryJoinOrCreate();
+        });
+    }
+    private void Start()
+    {
+        Authentication();
+    }
+
+    private async void Authentication()
+    {
+        await UnityServices.InitializeAsync();
+
+        AuthenticationService.Instance.SignedIn += () =>
+        {
+            Debug.Log("Signed in " + AuthenticationService.Instance.PlayerId);
+        };
+
+        await AuthenticationService.Instance.SignInAnonymouslyAsync();
+    }
+
+    private async void TryJoinOrCreate()
+    {
+        Lobby lobby = await QuickJoinLobby() ?? await CreateLobby();
+
+        if (lobby != null) lobbyUI.gameObject.SetActive(false);
+    }
+
+    private async Task<Lobby> QuickJoinLobby()
+    {
+        try
+        {
+            Debug.Log("Try Join");
+
+            // look for lobby
+            Lobby lobby = await LobbyService.Instance.QuickJoinLobbyAsync();
+
+            // continues if lobby is found
+            JoinAllocation joinAllocation = await RelayService.Instance.JoinAllocationAsync(lobby.Data[CODE_KEY].Value);
+
+            // start client
+            NetworkManager.Singleton.GetComponent<UnityTransport>().SetClientRelayData(
+                joinAllocation.RelayServer.IpV4,
+                (ushort)joinAllocation.RelayServer.Port,
+                joinAllocation.AllocationIdBytes,
+                joinAllocation.Key,
+                joinAllocation.ConnectionData,
+                joinAllocation.HostConnectionData);
+
+            NetworkManager.Singleton.StartClient();
+
+            return lobby;
+        }
+        catch
+        {
+            Debug.Log("No lobby found");
+            return null;
+        }
+    }
+    private async Task<Lobby> CreateLobby()
+    {
+        try
+        {
+            Debug.Log("Try create lobby");
+
+            int maxPlayers = 2;
+
+            // start relay
+            var allocation = await RelayService.Instance.CreateAllocationAsync(maxPlayers);
+            var joinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
+
+            // add join code data
+            CreateLobbyOptions createLobbyOptions = new CreateLobbyOptions()
+            {
+                Data = new Dictionary<string, DataObject> { { CODE_KEY, new DataObject(DataObject.VisibilityOptions.Public, joinCode) } }
+            };
+
+            // create lobby
+            Lobby lobby = await LobbyService.Instance.CreateLobbyAsync(LOBBY_NAME, maxPlayers, createLobbyOptions);
+
+            // heartbeat
+            StartCoroutine(SendHeartbeat(10.5f, lobby));
+
+            // start host
+            NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(
+                allocation.RelayServer.IpV4,
+                (ushort)allocation.RelayServer.Port,
+                allocation.AllocationIdBytes,
+                allocation.Key,
+                allocation.ConnectionData);
+
+            NetworkManager.Singleton.StartHost();
+
+            return lobby;
+        }
+        catch (LobbyServiceException e)
+        {
+            Debug.LogWarning(e);
+            return null;
+        }
+    }
+
+    private IEnumerator SendHeartbeat(float delay, Lobby lobby)
+    {
+        yield return new WaitForSeconds(delay);
+
+        LobbyService.Instance.SendHeartbeatPingAsync(lobby.Id);
+
+    }
 }

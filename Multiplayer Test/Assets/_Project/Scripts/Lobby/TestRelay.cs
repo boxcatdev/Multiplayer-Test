@@ -15,12 +15,7 @@ public class TestRelay : MonoBehaviour
     [SerializeField] private TMP_InputField _inputField;
 
     private string playerName;
-    private UnityTransport unityTransport;
 
-    private void Awake()
-    {
-        unityTransport = NetworkManager.Singleton.GetComponent<UnityTransport>();
-    }
     private async void Start()
     {
         await UnityServices.InitializeAsync();
@@ -70,7 +65,7 @@ public class TestRelay : MonoBehaviour
 
             JoinAllocation joinAllocation = await RelayService.Instance.JoinAllocationAsync(joinCode);
 
-            NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(
+            NetworkManager.Singleton.GetComponent<UnityTransport>().SetClientRelayData(
                 joinAllocation.RelayServer.IpV4,
                 (ushort)joinAllocation.RelayServer.Port,
                 joinAllocation.AllocationIdBytes,
