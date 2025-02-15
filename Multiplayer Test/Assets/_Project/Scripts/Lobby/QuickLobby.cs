@@ -70,9 +70,28 @@ public class QuickLobby : MonoBehaviour
 
     private async void TryJoinOrCreate()
     {
-        Lobby lobby = await QuickJoinLobby() ?? await CreateLobby();
+        // get lobby count first then try
+        QueryResponse queryResponse = await LobbyService.Instance.QueryLobbiesAsync(GetQueryLobbiesOptions());
 
-        if (lobby != null) lobbyUI.gameObject.SetActive(false);
+        if (queryResponse.Results.Count == 0)
+        {
+            Lobby lobby = await CreateLobby();
+            if (lobby != null) lobbyUI.gameObject.SetActive(false);
+        }
+        else 
+        {
+            Lobby lobby = await QuickJoinLobby();
+            if (lobby != null) lobbyUI.gameObject.SetActive(false);
+            else 
+            { 
+                if (joiningText != null) joiningText.text = "Failed to find lobby";
+                lobbyUI.SetActive(true);
+            }
+        }
+
+        //Lobby lobby = await QuickJoinLobby() ?? await CreateLobby();
+
+        //if (lobby != null) lobbyUI.gameObject.SetActive(false);
     }
 
     private async Task<Lobby> QuickJoinLobby()
@@ -170,21 +189,12 @@ public class QuickLobby : MonoBehaviour
         {
             if (lobbylistText != null) lobbylistText.text = "";
 
-            QueryLobbiesOptions queryLobbiesOptions = new QueryLobbiesOptions()
-            {
-                Count = 10,
-                Filters = new List<QueryFilter>
-                {
-                    new QueryFilter(QueryFilter.FieldOptions.AvailableSlots, "0", QueryFilter.OpOptions.GT)
-                }
-            };
-
-            QueryResponse queryResponse = await LobbyService.Instance.QueryLobbiesAsync(queryLobbiesOptions);
+            QueryResponse queryResponse = await LobbyService.Instance.QueryLobbiesAsync(GetQueryLobbiesOptions());
 
             int index = 1;
             foreach (var result in queryResponse.Results)
             {
-                if (lobbylistText != null) lobbylistText.text = lobbylistText.text + "Lobby(" + index + ")" + result.Data[CODE_KEY].Value + "\n";
+                if (lobbylistText != null) lobbylistText.text = GetLobbyText(result, index);
             }
         }
         catch (LobbyServiceException e)
@@ -193,6 +203,21 @@ public class QuickLobby : MonoBehaviour
         }
     }
 
+    private string GetLobbyText(Lobby lobby, int index) 
+    {
+        return "Lobby (" + index + ") " + lobby.Data[CODE_KEY].Value + " " + lobby.Players.Count + "/" + lobby.MaxPlayers + "\n";
+    }
+    private QueryLobbiesOptions GetQueryLobbiesOptions()
+    {
+        return new QueryLobbiesOptions()
+            {
+                Count = 10,
+                Filters = new List<QueryFilter>
+                {
+                    new QueryFilter(QueryFilter.FieldOptions.AvailableSlots, "0", QueryFilter.OpOptions.GT)
+                }
+            };
+    }
     private IEnumerator SendHeartbeat(float delay, Lobby lobby)
     {
         yield return new WaitForSeconds(delay);
