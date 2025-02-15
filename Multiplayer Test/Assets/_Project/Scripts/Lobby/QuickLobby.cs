@@ -87,7 +87,11 @@ public class QuickLobby : MonoBehaviour
             savedLobby = lobby;
             JoinAllocation joinAllocation = await RelayService.Instance.JoinAllocationAsync(lobby.Data[CODE_KEY].Value);
 
-            if (lobbyCodeText != null) lobbyCodeText.text = "Code: " + lobby.Data[CODE_KEY].Value;
+            if (lobbyCodeText != null)
+            {
+                lobbyCodeText.gameObject.SetActive(true);
+                lobbyCodeText.text = "Code: " + lobby.Data[CODE_KEY].Value;
+            }
 
             // start client
             NetworkManager.Singleton.GetComponent<UnityTransport>().SetClientRelayData(
@@ -128,6 +132,12 @@ public class QuickLobby : MonoBehaviour
 
             // create lobby
             Lobby lobby = await LobbyService.Instance.CreateLobbyAsync(LOBBY_NAME, maxPlayers, createLobbyOptions);
+
+            if (lobbyCodeText != null)
+            {
+                lobbyCodeText.gameObject.SetActive(true);
+                lobbyCodeText.text = "Code: " + lobby.Data[CODE_KEY].Value;
+            }
 
             // heartbeat
             StartCoroutine(SendHeartbeat(10.5f, lobby));
