@@ -27,21 +27,38 @@ public class QuickLobby : MonoBehaviour
     ///     start game
     ///     
 
-    private const string CODE_KEY = "join";
-    private const string LOBBY_NAME = "Default Lobby";
+    public static QuickLobby Instance;
 
+    public const string CODE_KEY = "join";
+    public const string LOBBY_NAME = "Default Lobby";
+
+    [Header("Join")]
     [SerializeField] private GameObject lobbyUI;
     [Space]
-    [SerializeField] private Button joinButton;
-    [SerializeField] private Button refreshButton;
-    [SerializeField] private TextMeshProUGUI lobbyCodeText;
-    [SerializeField] private TextMeshProUGUI lobbylistText;
     [SerializeField] private TextMeshProUGUI joiningText;
+    [SerializeField] private Button joinButton;
+
+    //[SerializeField] private TextMeshProUGUI lobbylistText;
+
+    [Header("Game")]
+    [SerializeField] private TextMeshProUGUI lobbyCodeText;
+    [SerializeField] private GameObject lobbyCodeContainer;
+
+
+    [Header("List")]
+    [SerializeField] private Button refreshButton;
+    [Space]
+    [SerializeField] private List<ListObject> listObjects = new List<ListObject>();
 
     private Lobby savedLobby;
 
+    public Action<Lobby> OnJoinedGame = delegate { };
+
     private void Awake()
     {
+        // singleton
+        Instance = this;
+
         joinButton.onClick.AddListener(() =>
         {
             TryJoinOrCreate();
@@ -50,6 +67,14 @@ public class QuickLobby : MonoBehaviour
         {
             ListLobbies();
         });
+    }
+    private void OnEnable()
+    {
+        OnJoinedGame += QL_OnJoin;
+    }
+    private void OnDisable()
+    {
+        OnJoinedGame -= QL_OnJoin;
     }
     private void Start()
     {
@@ -66,6 +91,23 @@ public class QuickLobby : MonoBehaviour
         };
 
         await AuthenticationService.Instance.SignInAnonymouslyAsync();
+
+        // start list lobbies
+        ListLobbies();
+    }
+
+    private void QL_OnJoin(Lobby lobby)
+    {
+
+        if (lobby != null)
+        {
+            lobbyUI.gameObject.SetActive(false);
+        }
+        else
+        {
+            if (joiningText != null) joiningText.text = "Failed to find lobby";
+            lobbyUI.SetActive(true);
+        }
     }
 
     private async void TryJoinOrCreate()
@@ -76,17 +118,12 @@ public class QuickLobby : MonoBehaviour
         if (queryResponse.Results.Count == 0)
         {
             Lobby lobby = await CreateLobby();
-            if (lobby != null) lobbyUI.gameObject.SetActive(false);
+            OnJoinedGame?.Invoke(lobby);
         }
         else 
         {
             Lobby lobby = await QuickJoinLobby();
-            if (lobby != null) lobbyUI.gameObject.SetActive(false);
-            else 
-            { 
-                if (joiningText != null) joiningText.text = "Failed to find lobby";
-                lobbyUI.SetActive(true);
-            }
+            OnJoinedGame?.Invoke(lobby);
         }
 
         //Lobby lobby = await QuickJoinLobby() ?? await CreateLobby();
@@ -109,11 +146,7 @@ public class QuickLobby : MonoBehaviour
             savedLobby = lobby;
             JoinAllocation joinAllocation = await RelayService.Instance.JoinAllocationAsync(lobby.Data[CODE_KEY].Value);
 
-            if (lobbyCodeText != null)
-            {
-                lobbyCodeText.gameObject.SetActive(true);
-                lobbyCodeText.text = "Code: " + lobby.Data[CODE_KEY].Value;
-            }
+            ShowLobbyCode(lobby.Data[CODE_KEY].Value);
 
             // start client
             NetworkManager.Singleton.GetComponent<UnityTransport>().SetClientRelayData(
@@ -132,6 +165,40 @@ public class QuickLobby : MonoBehaviour
         {
             Debug.Log("No lobby found");
             return null;
+        }
+    }
+    public async void JoinLobbyById(Lobby lobby)
+    {
+        try
+        {
+            Debug.Log("Join by ID");
+
+            Lobby joinedLobby = await LobbyService.Instance.JoinLobbyByIdAsync(lobby.Id);
+
+            if (joiningText != null) joiningText.text = joiningText.text + "\n" + lobby.Data[CODE_KEY].Value;
+
+            // continues if lobby is found
+            savedLobby = lobby;
+            JoinAllocation joinAllocation = await RelayService.Instance.JoinAllocationAsync(lobby.Data[CODE_KEY].Value);
+
+            ShowLobbyCode(lobby.Data[CODE_KEY].Value);
+
+            // start client
+            NetworkManager.Singleton.GetComponent<UnityTransport>().SetClientRelayData(
+                joinAllocation.RelayServer.IpV4,
+                (ushort)joinAllocation.RelayServer.Port,
+                joinAllocation.AllocationIdBytes,
+                joinAllocation.Key,
+                joinAllocation.ConnectionData,
+                joinAllocation.HostConnectionData);
+
+            NetworkManager.Singleton.StartClient();
+
+            OnJoinedGame?.Invoke(joinedLobby);
+        }
+        catch (LobbyServiceException e)
+        {
+            Debug.LogWarning(e);
         }
     }
     private async Task<Lobby> CreateLobby()
@@ -155,11 +222,7 @@ public class QuickLobby : MonoBehaviour
             // create lobby
             Lobby lobby = await LobbyService.Instance.CreateLobbyAsync(LOBBY_NAME, maxPlayers, createLobbyOptions);
 
-            if (lobbyCodeText != null)
-            {
-                lobbyCodeText.gameObject.SetActive(true);
-                lobbyCodeText.text = "Code: " + lobby.Data[CODE_KEY].Value;
-            }
+            ShowLobbyCode(lobby.Data[CODE_KEY].Value);
 
             // heartbeat
             StartCoroutine(SendHeartbeat(10.5f, lobby));
@@ -182,27 +245,56 @@ public class QuickLobby : MonoBehaviour
             return null;
         }
     }
-
     private async void ListLobbies()
     {
         try
         {
-            if (lobbylistText != null) lobbylistText.text = "";
-
-            QueryResponse queryResponse = await LobbyService.Instance.QueryLobbiesAsync(GetQueryLobbiesOptions());
-
-            int index = 1;
-            foreach (var result in queryResponse.Results)
+            if (listObjects.Count > 0)
             {
-                if (lobbylistText != null) lobbylistText.text = GetLobbyText(result, index);
+                QueryLobbiesOptions queryLobbiesOptions = new QueryLobbiesOptions()
+                {
+                    Count = 3,
+                    Filters = new List<QueryFilter>
+                    {
+                        new QueryFilter(QueryFilter.FieldOptions.AvailableSlots, "0", QueryFilter.OpOptions.GT)
+                    }
+                };
+
+                QueryResponse queryResponse = await LobbyService.Instance.QueryLobbiesAsync(GetQueryLobbiesOptions());
+
+                for (int i = 0; i < listObjects.Count; i++)
+                {
+                    if (i < queryResponse.Results.Count)
+                    {
+                        // enable
+                        listObjects[i].gameObject.SetActive(true);
+                        listObjects[i].SetData(queryResponse.Results[i]);
+                    }
+                    else
+                    {
+                        // disable
+                        listObjects[i].gameObject.SetActive(false);
+                    }
+                }
+
+                StartCoroutine(DisableRefresh(2f));
             }
         }
         catch (LobbyServiceException e)
         {
-            Debug.LogError(e);
+            Debug.LogWarning(e);
         }
     }
 
+    private void ShowLobbyCode(string code)
+    {
+        if (lobbyCodeText != null && lobbyCodeContainer != null)
+        {
+            lobbyCodeContainer.SetActive(true);
+            //lobbyCodeText.gameObject.SetActive(true);
+            lobbyCodeText.text = "Lobby " + code;
+        }
+    }
     private string GetLobbyText(Lobby lobby, int index) 
     {
         return "Lobby (" + index + ") " + lobby.Data[CODE_KEY].Value + " " + lobby.Players.Count + "/" + lobby.MaxPlayers + "\n";
@@ -224,5 +316,13 @@ public class QuickLobby : MonoBehaviour
 
         LobbyService.Instance.SendHeartbeatPingAsync(lobby.Id);
 
+    }
+    private IEnumerator DisableRefresh(float delay)
+    {
+        refreshButton.enabled = false;
+
+        yield return new WaitForSeconds(delay);
+
+        refreshButton.enabled = true;
     }
 }

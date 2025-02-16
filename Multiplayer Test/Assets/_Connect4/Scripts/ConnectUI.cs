@@ -1,3 +1,4 @@
+using DG.Tweening;
 using TMPro;
 using UnityEngine;
 
@@ -12,6 +13,9 @@ public class ConnectUI : MonoBehaviour
     [Space]
     [SerializeField] private TextMeshProUGUI redScoreText;
     [SerializeField] private TextMeshProUGUI yellowScoreText;
+    [Space]
+    [SerializeField] private GameObject waitingForPlayerText;
+    [SerializeField] private Transform gameStartText;
 
     private void Awake()
     {
@@ -50,6 +54,20 @@ public class ConnectUI : MonoBehaviour
         if (yellowScoreText != null) yellowScoreText.text = "0";
 
         UpdateHighlight();
+
+        if (waitingForPlayerText == null || gameStartText == null) return;
+
+        gameStartText.localScale = Vector3.zero;
+
+        waitingForPlayerText.transform.DOScale(0f, 0.25f).onComplete = () =>
+        {
+            gameStartText.DOScale(1f, 1f).SetEase(Ease.OutBounce).OnComplete(() =>
+            {
+                gameStartText.gameObject.SetActive(false);
+            });
+
+            waitingForPlayerText.SetActive(false);
+        };
     }
 
     private void UpdateHighlight()
