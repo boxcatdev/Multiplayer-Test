@@ -51,6 +51,8 @@ public class GameManagerConnect : NetworkBehaviour
     public Action OnCurrentTurnValueChanged = delegate { };
     public Action OnScoreValueChanged = delegate { };
 
+    public Action OnPlayerDisconnected = delegate { };
+
     private void Awake()
     {
         #region Singleton
@@ -265,6 +267,11 @@ public class GameManagerConnect : NetworkBehaviour
 
         // visuals event
         TriggerOnGameRematchRpc();
+    }
+    [Rpc(SendTo.ClientsAndHost)]
+    public void TriggerPlayerDisconnectedRpc()
+    {
+        OnPlayerDisconnected?.Invoke();
     }
 
     // client rpcs
