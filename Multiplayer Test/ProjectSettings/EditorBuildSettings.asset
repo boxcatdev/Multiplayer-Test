@@ -6,12 +6,6 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/_Project/Scenes/MultiSandbox.unity
-    guid: 074c49028542d6447bc6a0403cabab3e
-  - enabled: 1
-    path: Assets/_TicTacToe/Scenes/TicTacToe.unity
-    guid: 8546b71ffecd1f24882d6ace3361e57e
-  - enabled: 1
     path: Assets/_Connect4/Scenes/ConnectGame.unity
     guid: 484f0e14bf98dc248ba6342249e8bd5a
   m_configObjects:
