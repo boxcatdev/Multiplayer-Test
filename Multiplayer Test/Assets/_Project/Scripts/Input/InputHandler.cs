@@ -6,14 +6,11 @@ public class InputHandler : MonoBehaviour
 {
     [Header("Inputs")]
     public Vector2 move;
-    //public bool use;
-    //public bool primaryDown;
-    //public bool secondaryDown;
-    //public bool paused;
-    //public bool menu;
+    public bool sprint;
     [Space]
     public bool isGamepad;
 
+    public Action<bool> OnSprintPress = delegate { };
     public Action OnPrimaryPress = delegate { };
     public Action OnSecondaryPress = delegate { };
     public Action OnUsePress = delegate { };
@@ -25,6 +22,7 @@ public class InputHandler : MonoBehaviour
     private PlayerInput playerInput;
 
     private InputAction moveActon;
+    private InputAction sprintActon;
     private InputAction primaryAction;
     private InputAction secondaryAction;
     private InputAction useAction;
@@ -36,6 +34,7 @@ public class InputHandler : MonoBehaviour
         playerInput = GetComponent<PlayerInput>();
 
         moveActon = InputSystem.actions.FindAction("Move");
+        sprintActon = InputSystem.actions.FindAction("Sprint");
         primaryAction = InputSystem.actions.FindAction("Primary");
         secondaryAction = InputSystem.actions.FindAction("Secondary");
         useAction = InputSystem.actions.FindAction("Use");
@@ -46,6 +45,7 @@ public class InputHandler : MonoBehaviour
     {
         moveActon.performed += Move;
         moveActon.canceled += StopMove;
+        sprintActon.performed += Sprint;
         primaryAction.performed += Primary;
         secondaryAction.performed += Secondary;
         useAction.performed += Use;
@@ -56,6 +56,7 @@ public class InputHandler : MonoBehaviour
     {
         moveActon.performed -= Move;
         moveActon.canceled -= StopMove;
+        sprintActon.performed -= Sprint;
         primaryAction.performed -= Primary;
         secondaryAction.performed -= Secondary;
         useAction.performed -= Use;
@@ -96,6 +97,13 @@ public class InputHandler : MonoBehaviour
 
         MoveInput(context.ReadValue<Vector2>());
         //move = context.ReadValue<Vector2>();
+    }
+    private void Sprint(InputAction.CallbackContext context)
+    {
+        CheckControl(context.control.device.name);
+
+        bool good = context.ReadValueAsButton();
+        SprintInput(good);
     }
     private void Primary(InputAction.CallbackContext context)
     {
@@ -147,6 +155,11 @@ public class InputHandler : MonoBehaviour
     public void MoveInput(Vector2 newMove)
     {
         move = newMove;
+    }
+    public void SprintInput(bool newSprint)
+    {
+        sprint = newSprint;
+        OnSprintPress?.Invoke(newSprint);
     }
     public void PrimaryInput(bool newPrimary)
     {

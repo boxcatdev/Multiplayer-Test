@@ -12,6 +12,7 @@ public class TopDownController : MonoBehaviour
     [SerializeField] private float _decelerationLerp = 5f;
     [Space]
     [SerializeField] private bool _canMove = true;
+    [SerializeField] private bool _smoothAnimation = true;
     public bool canMove => _canMove;
 
     [Header("Camera")]
@@ -102,7 +103,7 @@ public class TopDownController : MonoBehaviour
 
             // animation
             if (_animator == null) return;
-            _animator.SetFloat(_animIDSpeed, _targetSpeed);
+            _animator.SetFloat(_animIDSpeed, _smoothAnimation == true ? _targetSpeed : _playerSpeed);
 
             // grounded check
             //_isGrounded = _controller.isGrounded;
@@ -117,7 +118,7 @@ public class TopDownController : MonoBehaviour
             _controller.Move(_decelerationDirection * _targetSpeed * Time.fixedDeltaTime);
 
             if (_animator == null) return;
-            _animator.SetFloat(_animIDSpeed, _targetSpeed);
+            _animator.SetFloat(_animIDSpeed, _smoothAnimation == true ? _targetSpeed : 0f);
 
             //float animSpeed = _animator.GetFloat(_animIDSpeed);
             //float targetSpeed = Mathf.Lerp(animSpeed, 0, 2f * Time.fixedDeltaTime);

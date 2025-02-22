@@ -1042,8 +1042,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _playerSpeed: 5
   _accelerationLerp: 8
-  _decelerationLerp: 15
+  _decelerationLerp: 8
   _canMove: 1
+  _smoothAnimation: 1
   _cameraPivot: {fileID: 4912201581055782261}
   _cameraEulerAngles: {x: 50, y: 0, z: 0}
 --- !u!114 &3020191393328537066
@@ -1084,7 +1085,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
-  _isServerAuth: 0
+  _isServerAuth: 1
 --- !u!114 &8643251263659223651
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1119,7 +1120,7 @@ MonoBehaviour:
   UseHalfFloatPrecision: 0
   InLocalSpace: 0
   SwitchTransformSpaceWhenParented: 0
-  Interpolate: 0
+  Interpolate: 1
   SlerpPosition: 0
 --- !u!114 &726812199899385111
 MonoBehaviour:
