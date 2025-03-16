@@ -34,18 +34,18 @@
                 },
                 {
                     "name": "Primary",
-                    "type": "Button",
+                    "type": "PassThrough",
                     "id": "8420f2f8-dbe2-4ca5-a9c8-50cb0878b07f",
-                    "expectedControlType": "",
+                    "expectedControlType": "Button",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": true
                 },
                 {
                     "name": "Secondary",
-                    "type": "Button",
+                    "type": "PassThrough",
                     "id": "f212afcd-4dda-46a8-9079-55e1504c201a",
-                    "expectedControlType": "",
+                    "expectedControlType": "Button",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": true

@@ -1418,6 +1418,8 @@ MonoBehaviour:
   move: {x: 0, y: 0}
   look: {x: 0, y: 0}
   sprint: 0
+  primary: 0
+  secondary: 0
   isGamepad: 0
 --- !u!114 &7324170674107950662
 MonoBehaviour:
@@ -1436,9 +1438,10 @@ MonoBehaviour:
   _accelerationLerp: 8
   _decelerationLerp: 15
   _canMove: 1
-  LockCameraPosition: 1
+  LockCameraPosition: 0
   _cameraPivot: {fileID: 792705961230773094}
   _cameraPitch: 50
+  _rotationSpeed: 0.25
 --- !u!1 &7542150376603180192
 GameObject:
   m_ObjectHideFlags: 0

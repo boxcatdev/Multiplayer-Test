@@ -2,18 +2,20 @@ using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class BuilderInputH : MonoBehaviour
+public class BuilderIH : MonoBehaviour
 {
     [Header("Inputs")]
     public Vector2 move;
     public Vector2 look;
     public bool sprint;
+    public bool primary;
+    public bool secondary;
     [Space]
     public bool isGamepad;
 
     public Action<bool> OnSprintPress = delegate { };
-    public Action OnPrimaryPress = delegate { };
-    public Action OnSecondaryPress = delegate { };
+    public Action<bool> OnPrimaryPress = delegate { };
+    public Action<bool> OnSecondaryPress = delegate { };
     public Action OnUsePress = delegate { };
     public Action OnPausePress = delegate { };
     public Action OnMenuPress = delegate { };
@@ -178,11 +180,13 @@ public class BuilderInputH : MonoBehaviour
     }
     public void PrimaryInput(bool newPrimary)
     {
-        if (newPrimary) OnPrimaryPress?.Invoke();
+        primary = newPrimary;
+        OnPrimaryPress?.Invoke(newPrimary);
     }
     public void SecondaryInput(bool newSecondary)
     {
-        if (newSecondary) OnSecondaryPress?.Invoke();
+        secondary = newSecondary;
+        OnSecondaryPress?.Invoke(newSecondary);
     }
     public void UseInput(bool newUse)
     {

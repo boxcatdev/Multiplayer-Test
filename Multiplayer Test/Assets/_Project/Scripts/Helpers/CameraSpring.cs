@@ -22,16 +22,16 @@ public class CameraSpring : MonoBehaviour
         {
             if (hit.distance < _targetDistance)
             {
-                transform.localPosition = new Vector3(0, 0, -hit.distance);
+                transform.localPosition = new Vector3(transform.localPosition.x, transform.localPosition.y, -hit.distance);
             }
             else
             {
-                transform.localPosition = new Vector3(0, 0, -_targetDistance);
+                transform.localPosition = new Vector3(transform.localPosition.x, transform.localPosition.y, -_targetDistance);
             }
         }
         else
         {
-            transform.localPosition = new Vector3(0, 0, -_targetDistance);
+            transform.localPosition = new Vector3(transform.localPosition.x, transform.localPosition.y, -_targetDistance);
         }
     }
 }

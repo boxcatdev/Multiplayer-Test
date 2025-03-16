@@ -1,10 +1,10 @@
 using UnityEngine;
 
 [RequireComponent(typeof(CharacterController))]
-[RequireComponent(typeof(BuilderInputH))]
+[RequireComponent(typeof(BuilderIH))]
 public class BuilderController : MonoBehaviour
 {
-    private BuilderInputH _input;
+    private BuilderIH _input;
 
     [Header("Movement Settings")]
     [SerializeField] private float _playerSpeed = 3f;
@@ -17,25 +17,14 @@ public class BuilderController : MonoBehaviour
     public bool canMove => _canMove;
 
     [Header("Camera")]
-    /*[Tooltip("The follow target set in the Cinemachine Virtual Camera that the camera will follow")]
-    public GameObject CinemachineCameraTarget;
-
-    [Tooltip("How far in degrees can you move the camera up")]
-    public float TopClamp = 70.0f;
-
-    [Tooltip("How far in degrees can you move the camera down")]
-    public float BottomClamp = -30.0f;
-
-    [Tooltip("Additional degress to override the camera. Useful for fine tuning camera position when locked")]
-    public float CameraAngleOverride = 0.0f;
-
-    [Tooltip("For locking the camera position on all axis")]*/
     public bool LockCameraPosition = false;
-    [Space]
     [SerializeField] private Transform _cameraPivot;
+    [Space]
     [SerializeField] private float _cameraPitch = 50f;
+    [SerializeField] private float _rotationSpeed = 0.25f;
     //[SerializeField] private Vector3 _cameraEulerAngles;
     private float _cameraYaw = 0f;
+    private bool _toggleCamRotate = true;
 
     private CharacterController _controller;
     public const float PI_MULT = 57.29f;
@@ -50,18 +39,27 @@ public class BuilderController : MonoBehaviour
     {
         _controller = GetComponent<CharacterController>();
         _animator = GetComponent<Animator>();
-        _input = GetComponent<BuilderInputH>();
+        _input = GetComponent<BuilderIH>();
+    }
+    private void OnEnable()
+    {
+        _input.OnSecondaryPress += SecondaryInput;
+    }
+    private void OnDisable()
+    {
+        _input.OnSecondaryPress -= SecondaryInput;
     }
     private void Start()
     {
         AssignAnimationIDs();
 
-        //Cursor.lockState = CursorLockMode.Locked;
-        LockCameraPosition = true;
+        Cursor.lockState = CursorLockMode.Locked;
+        //LockCameraPosition = true;
     }
     private void FixedUpdate()
     {
-        MoveUpdate();
+        //MoveUpdate();
+        OldMove();
         SimpleKeepGrounded();
         //SimpleCameraRotation();
     }
@@ -98,7 +96,7 @@ public class BuilderController : MonoBehaviour
             //Don't multiply mouse input by Time.deltaTime;
             float deltaTimeMultiplier = _input.isGamepad ? (fixedTimeStep ? Time.fixedDeltaTime : Time.deltaTime) : 1.0f;
 
-            _cameraYaw += _input.look.x * deltaTimeMultiplier;
+            _cameraYaw += (_toggleCamRotate ? _input.look.x : 0f) * _rotationSpeed * deltaTimeMultiplier;
         }
 
         _cameraPivot.rotation = Quaternion.Euler(_cameraPitch, _cameraYaw, 0);
@@ -172,9 +170,112 @@ public class BuilderController : MonoBehaviour
         }
     }
 
+    private float _targetRotation;
+    private float _rotationVelocity;
+    private float RotationSmoothTime = 0.12f;
+    private void OldMove()
+    {
+        // set target speed based on move speed, sprint speed and if sprint is pressed
+        float targetSpeed = _input.sprint ? _sprintSpeed : _playerSpeed;
+
+        // a simplistic acceleration and deceleration designed to be easy to remove, replace, or iterate upon
+
+        // note: Vector2's == operator uses approximation so is not floating point error prone, and is cheaper than magnitude
+        // if there is no input, set the target speed to 0
+        if (_input.move == Vector2.zero) targetSpeed = 0.0f;
+
+        // a reference to the players current horizontal velocity
+        float currentHorizontalSpeed = new Vector3(_controller.velocity.x, 0.0f, _controller.velocity.z).magnitude;
+
+        float speedOffset = 0.1f;
+        float inputMagnitude = 1f;
+        //float inputMagnitude = _input.analogMovement ? _input.move.magnitude : 1f;
+
+        // accelerate or decelerate to target speed
+        if (currentHorizontalSpeed < targetSpeed - speedOffset ||
+            currentHorizontalSpeed > targetSpeed + speedOffset)
+        {
+            // creates curved result rather than a linear one giving a more organic speed change
+            // note T in Lerp is clamped, so we don't need to clamp our speed
+            _targetSpeed = Mathf.Lerp(currentHorizontalSpeed, targetSpeed * inputMagnitude,
+                Time.fixedDeltaTime * _accelerationLerp);
+
+            // round speed to 3 decimal places
+            _targetSpeed = Mathf.Round(_targetSpeed * 1000f) / 1000f;
+        }
+        else
+        {
+            _targetSpeed = targetSpeed;
+        }
+
+        //_animationBlend = Mathf.Lerp(_animationBlend, targetSpeed, Time.deltaTime * SpeedChangeRate);
+        //if (_animationBlend < 0.01f) _animationBlend = 0f;
+
+        // normalise input direction
+        Vector3 inputDirection = new Vector3(_input.move.x, 0.0f, _input.move.y).normalized;
+
+        // note: Vector2's != operator uses approximation so is not floating point error prone, and is cheaper than magnitude
+        // if there is a move input rotate player when the player is moving
+        if (_input.move != Vector2.zero)
+        {
+            _targetRotation = Mathf.Atan2(inputDirection.x, inputDirection.z) * Mathf.Rad2Deg +
+                              _cameraPivot.transform.eulerAngles.y;
+            float rotation = Mathf.SmoothDampAngle(transform.eulerAngles.y, _targetRotation, ref _rotationVelocity,
+                RotationSmoothTime);
+
+            // rotate to face input direction relative to camera position
+            transform.rotation = Quaternion.Euler(0.0f, rotation, 0.0f);
+        }
+
+
+        Vector3 targetDirection = Quaternion.Euler(0.0f, _targetRotation, 0.0f) * Vector3.forward;
+
+        // move the player
+        _controller.Move(targetDirection.normalized * (_targetSpeed * Time.fixedDeltaTime) +
+                         new Vector3(0.0f, 0f, 0.0f) * Time.fixedDeltaTime);
+
+        // animation
+        if (_animator == null) return;
+        _animator.SetFloat(_animIDSpeed, _targetSpeed);
+
+        // update animator if using character
+        /*if (_hasAnimator)
+        {
+            _animator.SetFloat(_animIDSpeed, _animationBlend);
+            _animator.SetFloat(_animIDMotionSpeed, inputMagnitude);
+        }*/
+    }
+
     private void SetCanMove(bool canMove)
     {
         _canMove = canMove;
+    }
+    #endregion
+
+    #region Cursor
+    private void SecondaryInput(bool down)
+    {
+        if (down == false) return;
+
+        if (Cursor.lockState == CursorLockMode.Locked)
+        {
+            Cursor.lockState = CursorLockMode.None;
+            _toggleCamRotate = false;
+        }
+        else
+        {
+            Cursor.lockState = CursorLockMode.Locked;
+            _toggleCamRotate = true;
+        }
+
+        /*if (down == true)
+        {
+            Cursor.lockState = CursorLockMode.None;
+        }
+        else
+        {
+            Cursor.lockState = CursorLockMode.Locked;
+        }*/
     }
     #endregion
 }
