@@ -1,5 +1,5 @@
 {
-    "name": "FreeCamActions",
+    "name": "FixedCamActions",
     "maps": [
         {
             "name": "Player",
@@ -9,15 +9,6 @@
                     "name": "Move",
                     "type": "Value",
                     "id": "49f53341-0fe1-46fc-b25d-2a158480b06b",
-                    "expectedControlType": "Vector2",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": true
-                },
-                {
-                    "name": "Look",
-                    "type": "PassThrough",
-                    "id": "fdccd8e2-10bc-44d7-be98-84b2aeeea94e",
                     "expectedControlType": "Vector2",
                     "processors": "",
                     "interactions": "",
@@ -274,17 +265,6 @@
                     "processors": "",
                     "groups": ";Gamepad",
                     "action": "Sprint",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "6321a825-efdb-4550-b2db-f806780d45be",
-                    "path": "<Pointer>/delta",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": ";Keyboard",
-                    "action": "Look",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

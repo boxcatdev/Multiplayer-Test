@@ -3,9 +3,10 @@ using UnityEngine;
 
 public class CameraSpring : MonoBehaviour
 {
-    [Header("Spring")]
-    //[SerializeField] private Transform _camPivot;
+    [Header("Spring Settings")]
     [SerializeField] private float _targetDistance = 10f;
+    [Space]
+    [SerializeField] private LayerMask _ignoreLayer;
 
     private void Update()
     {
@@ -13,16 +14,11 @@ public class CameraSpring : MonoBehaviour
     }
     private void MoveCamera()
     {
-        //if (_camPivot == null) return;
-
-        //Vector3 origin = _camPivot.position;
-        //Vector3 direction = transform.position - origin;
-
         Vector3 origin = transform.parent.position;
         Vector3 direction = -transform.forward;
 
         RaycastHit hit;
-        if (Physics.Raycast(origin, direction, out hit))
+        if (Physics.Raycast(origin, direction, out hit, ~_ignoreLayer))
         {
             if (hit.distance < _targetDistance)
             {
